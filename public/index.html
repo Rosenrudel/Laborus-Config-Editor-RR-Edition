@@ -1,0 +1,1519 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Laborus Config Editor</title>
+
+	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	  
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/manifest.json">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+	<meta name="apple-mobile-web-app-title" content="Laborus Config Editor">
+	<meta name="application-name" content="Laborus Config Editor">
+	<meta name="theme-color" content="#00a65a">
+	  
+    <!-- Bootstrap 3.3.6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="/dist/css/AdminLTE.min.css">
+    <link rel="stylesheet" href="/dist/css/skins/skin-green.min.css">
+    <link rel="stylesheet" href="/dist/css/custom.css">
+    <script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="/bower_components/polymer/polymer.html">
+    <link rel="import" href="/bower_components/paper-listbox/paper-listbox.html">
+    <link rel="import" href="/bower_components/paper-item/paper-item.html">
+    <link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+    <link rel="import" href="/bower_components/iron-pages/iron-pages.html">
+    <link rel="import" href="/bower_components/polymerfire/firebase-app.html">
+    <link rel="import" href="/bower_components/polymerfire/firebase-document.html">
+    <link rel="import" href="/bower_components/polymerfire/firebase-query.html">
+    <link rel="import" href="/bower_components/vaadin-grid/vaadin-grid.html">
+    <link rel="import" href="/bower_components/vaadin-grid/vaadin-grid-sorter.html">
+    <link rel="import" href="/bower_components/vaadin-grid/vaadin-grid-filter.html">
+    <link rel="import" href="/bower_components/login-fire/login-fire.html">
+  </head>
+  <body class="hold-transition skin-green sidebar-mini">
+    <dom-bind>
+      <template>
+        <firebase-app
+          auth-domain="laborus-config-editor.firebaseapp.com"
+          database-url="https://laborus-config-editor.firebaseio.com"
+          api-key="AIzaSyB0ep458-nnIonb9Xgb50rwCWUZ6XsC7oU"
+          storage-bucket="laborus-config-editor.appspot.com"
+          messaging-sender-id="178945361261">
+        </firebase-app>
+        <firebase-document
+          path="user/[[user.uid]]"
+          data="{{config}}">
+        </firebase-document>
+        <firebase-document
+          id="jobDocument"
+          path="user/[[user.uid]]/jobs/[[selectedJob]]"
+          data="{{job}}">
+        </firebase-document>
+        <firebase-document
+          id="jobBonusDocument"
+          path="user/[[user.uid]]/jobs/[[selectedJob]]/boni/[[selectedBonus]]"
+          data="{{jobbonus}}">
+        </firebase-document>
+        <firebase-document
+          id="jobAbilityDocument"
+          path="user/[[user.uid]]/jobs/[[selectedJob]]/abilities/[[selectedAbility]]"
+          data="{{jobability}}">
+        </firebase-document>
+        <div class="wrapper" hidden$="[[!signedIn]]">
+          <header class="main-header">
+            <a href="../../index2.html" class="logo">
+            <span class="logo-mini"><b>L</b>CE</span>
+            <span class="logo-lg"><b>Laborus</b> Config Editor</span>
+            </a>
+            <nav class="navbar navbar-static-top">
+              <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              </a>
+            </nav>
+          </header>
+          <aside class="main-sidebar">
+            <section class="sidebar">
+              <ul class="sidebar-menu">
+			    <li>
+                  <a on-tap="logout">
+                  <i class="fa fa-sign-out"></i> <span>Logout</span>
+                  </a>
+                </li>
+                <li class="header">NAVIGATION</li>
+                <li class$="{{isActive(page, 'import')}}">
+                  <a on-tap="switchPage" redirect="import">
+                  <i class="fa fa-thumb-tack"></i> <span>Import / Export</span>
+                  </a>
+                </li>
+                <li class$="{{isActive(page, 'general')}}">
+                  <a on-tap="switchPage" redirect="general">
+                  <i class="fa fa-server"></i> <span>General Settings</span>
+                  </a>
+                </li>
+                <li class$="{{isActive(page, 'jobs')}}">
+                  <a on-tap="switchPage" redirect="jobs">
+                  <i class="fa fa-users"></i> <span>Jobs Overview</span>
+                  </a>
+                </li>
+                <li class="header">JOBS</li>
+                <template is="dom-repeat" items="[[config.jobs]]">
+                  <li class$="{{isActive(page, 'job', item.id, job.id)}}" on-tap="switchPage" redirect="job" redirect-type="job" redirect-target="[[index]]">
+                    <a >
+                    <i class="fa fa-user"></i> <span>[[item.name]]</span>
+                    </a>
+                  </li>
+                </template>
+              </ul>
+            </section>
+            <!-- /.sidebar -->
+          </aside>
+          <iron-pages selected="[[page]]" attr-for-selected="pagename" fallback-selection="general">
+            <div class="content-wrapper" pagename="general">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  General Plugin Settings
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li class="active">General Settings</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <!-- left column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Basic Settings</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <!-- text input -->
+                          <div class="form-group">
+                            <label for="inputActiveGamemodes" class="col-sm-6 control-label">Active Gamemodes</label>
+                            <div class="col-sm-6">
+                              <paper-listbox multi selected-values="{{config.enabledGamemodes}}" attr-for-selected="textContent">
+                                <paper-item>Survival</paper-item>
+                                <paper-item>Creative</paper-item>
+                                <paper-item>Adventure</paper-item>
+                                <paper-item>Spectator</paper-item>
+                              </paper-listbox>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputJobEpUnselected" class="col-sm-6 control-label">Job Ep unselected (modifier)</label>
+                            <div class="col-sm-6">
+                              <input type="number" step="0.01" class="form-control" id="inputJobEpUnselected" placeholder="0.5" value="{{config.xpWithoutJob::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputMaxSelectedJobs" class="col-sm-6 control-label">Max Selected Jobs</label>
+                            <div class="col-sm-6">
+                              <input type="number" class="form-control" id="inputMaxSelectedJobs" placeholder="1" value="{{config.maxSelectedJobs::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputFallbackLanguage" class="col-sm-6 control-label">Fallback Language</label>
+                            <div class="col-sm-6">
+                              <input type="text" class="form-control" id="inputFallbackLanguage" placeholder="en" value="{{config.fallbackLanguage::input}}">
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+					<div class="box box-info">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Anti Replace Farming</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <!-- form start -->
+                      <form class="form-horizontal">
+                        <div class="box-body">
+                          <div class="form-group">
+                            <label for="inputAntireplaceTime" class="col-sm-4 control-label">Time (Hours)</label>
+                            <div class="col-sm-8">
+                              <input type="number" class="form-control" id="inputAntireplaceTime" placeholder="24" value="{{config.antiReplaceTime::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputAntireplaceActive" class="col-xs-4 control-label">Active?</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputAntireplaceActive" checked="{{config.antiReplaceActive::change}}">
+                            </div>
+                          </div>
+                        </div>
+                        <!-- /.box-body -->
+                      </form>
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (left) -->
+                  <!-- right column -->
+                  <div class="col-md-6">
+					<div class="box box-info">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Default Level</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <!-- form start -->
+                      <form class="form-horizontal">
+                        <div class="box-body">
+						  <vaadin-grid items="{{config.level}}">
+						    <vaadin-grid-column>
+							  <template class="header">Level</template>
+							  <template>[[_addOne(index)]]</template>
+						    </vaadin-grid-column>
+						    <vaadin-grid-column>
+							  <template class="header"><vaadin-grid-sorter path="xp" direction="asc">XP</vaadin-grid-sorter></template>
+							  <template>[[item.xp]]</template>
+						    </vaadin-grid-column>
+						    <vaadin-grid-column>
+							  <template class="header">Actions</template>
+							  <template><button type="button" class="btn btn-info btn-flat col-sm-12"  on-tap="deleteLevelConfig" level="[[item]]">Delete</button></template>
+						    </vaadin-grid-column>
+						  </vaadin-grid>
+						  
+                          <div class="input-group col-sm-12">
+						    <input type="number" class="form-control" placeholder="100" value="{{newLevel::input}}">
+						    <span class="input-group-btn">
+							  <button type="button" class="btn btn-info btn-flat" on-tap="addNewLevelConfig">Add Level</button>
+						    </span>
+						  </div>
+                        </div>
+                        <!-- /.box-body -->
+                      </form>
+                    </div>
+                    <div class="box box-success">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Logging</h3>
+                      </div>
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <label for="inputLoggingAbilities" class="col-xs-4 control-label">Abilities</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingAbilities" checked="{{config.logging.jobAbilities::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputLoggingActions" class="col-xs-4 control-label">Actions</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingActions" checked="{{config.logging.jobActions::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputLoggingBoni" class="col-xs-4 control-label">Boni</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingBoni" checked="{{config.logging.jobBoni::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputLoggingData" class="col-xs-4 control-label">Data</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingData" checked="{{config.logging.jobData::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputLoggingGeneral" class="col-xs-4 control-label">General</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingGeneral" checked="{{config.logging.jobGeneral::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputLoggingListener" class="col-xs-4 control-label">Listener</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputLoggingListener" checked="{{config.logging.jobListener::change}}">
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (right) -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+            <div class="content-wrapper" pagename="import">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  Import / Export
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a href="index.html"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li class="active">Import / Export</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <!-- left column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Import (not working currently)</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                              <textarea class="form-control" id="inputJobId" cols="40" rows="12" style="height: 100%" disabled></textarea>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                              <button type="button" class="btn btn-warning btn-flat col-sm-12" disabled>Import</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (left) -->
+                  <!-- right column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Export</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <div class="col-sm-12">
+                              <textarea class="form-control" cols="40" rows="12" value="[[export(config, page)]]" readonly></textarea>
+                            </div>
+                          </div>
+						  <div class="form-group">
+                            <div class="col-sm-12">
+                              <button type="button" class="btn btn-danger btn-flat col-sm-12" on-tap="reset">Reset</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (right) -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+            <div class="content-wrapper" pagename="jobs">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  Jobs Overview
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a on-tap="switchPage" redirect="general"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li class="active">Jobs</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <template is="dom-repeat" items="{{config.jobs}}">
+                    <div class=" col-md-6">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">[[item.id]]</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <div class="form-horizontal form-group">
+                            <div class="col-sm-12">
+                              <div class="form-group">
+                                <label class="col-sm-4">Name</label>
+                                <div class="col-sm-8">
+                                  <span>[[item.name]]</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label class="col-sm-4">Description</label>
+                                <div class="col-sm-8">
+                                  <span>[[item.description]]</span>
+                                </div>
+                              </div>
+                              <div class="form-group">
+                                <label class="col-sm-4 ">Permission</label>
+                                <div class="col-sm-8">
+                                  <span>[[item.permission]]</span>
+                                </div>
+                              </div>
+                              <button type="button" class="btn btn-info btn-flat col-sm-12"  on-tap="switchPage" redirect="job" redirect-type="job" redirect-target="[[index]]">Edit</button>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </div>
+                  </template>
+                  <!-- general form elements -->
+                  <div class="col-md-6">
+                    <div class="box box-info">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">New Job</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <div class="input-group col-sm-12">
+                          <input type="text" class="form-control" placeholder="job id" value="{{newJobId::input}}">
+                          <span class="input-group-btn">
+                          <button type="button" class="btn btn-info btn-flat" on-tap="newJob">Add New Job!</button>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                  </div>
+                  <!-- /.box -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+            <div class="content-wrapper" pagename="job">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  Job ({{job.name}})
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a on-tap="switchPage" redirect="general"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li><a on-tap="switchPage" redirect="jobs">Jobs</a></li>
+                  <li class="active">{{job.id}}</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <!-- left column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Basic Settings</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <label for="inputJobId" class="col-sm-4 control-label">Id</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" id="inputJobId" placeholder="miner" value="{{job.id::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputJobName" class="col-sm-4 control-label">Name</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" id="inputJobName" placeholder="Miner" value="{{job.name::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputJobDescription" class="col-sm-4 control-label">Description</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" id="inputJobDescription" placeholder="destroys stone and other stuff" value="{{job.description::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputJobPermission" class="col-sm-4 control-label">Permission</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" id="inputJobPermission" value="{{job.permission::input}}">
+                            </div>
+                          </div>
+						  <div class="form-group">
+                            <label for="inputDefaultLevel" class="col-sm-4 control-label">Use Default Level?</label>
+                            <div class="col-sm-8">
+                              <input type="checkbox" id="inputDefaultLevel" checked="{{job.defaultLevel::change}}">
+                            </div>
+                          </div>
+						  <div class="form-group">
+                            <div class="col-xs-12">
+                              <button on-tap="deleteJob" type="button" class="btn btn-danger btn-flat col-xs-12">Delete</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                    <div class="box box-danger">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Actions</h3>
+                      </div>
+                      <div class="box-body">
+                        <vaadin-grid items="{{job.actions}}" id="gridus">
+                          <vaadin-grid-column flex-grow="1">
+                            <template class="header">
+								<vaadin-grid-sorter path="type" direction="asc">
+						        <vaadin-grid-filter aria-label="Type" path="type" value="[[_filterActionType]]">
+								  <select class="form-control form-control-table" value="{{_filterActionType::change}}">
+									<option>Break</option>
+									<option>Place</option>
+									<option>Kill</option>
+									<option>Damage</option>
+									<option>Use</option>
+									<option>Tame</option>
+								  </select>
+								</vaadin-grid-filter></vaadin-grid-sorter>
+							  </template>
+                            <template>
+                              <select on-change="updateFirebaseJobActionData" class="form-control form-control-table" value="{{item.type::change}}">
+                                <option>Break</option>
+                                <option>Place</option>
+                                <option>Kill</option>
+                                <option>Damage</option>
+                                <option>Use</option>
+                                <option>Tame</option>
+                              </select>
+                            </template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column flex-grow="0">
+                            <template class="header">
+								<vaadin-grid-sorter path="needLevel">
+									Level
+								</vaadin-grid-sorter>
+							</template>
+                            <template><input on-change="updateFirebaseJobActionData" type="number" class="form-control form-control-table" placeholder="0" value="{{item.needLevel::input}}"></template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column flex-grow="0">
+                            <template class="header">
+								<vaadin-grid-sorter path="xp">
+									XP
+								</vaadin-grid-sorter>
+							</template>
+                            <template><input on-change="updateFirebaseJobActionData" type="number" class="form-control form-control-table" placeholder="1" value="{{item.xp::input}}"></template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column flex-grow="2">
+							<template class="header">
+								<vaadin-grid-sorter path="item">
+									<vaadin-grid-filter aria-label="Item" path="item" value="[[_filterItem]]">
+										<input type="text" class="form-control form-control-table" placeholder="Item" value="{{_filterItem::input}}">
+									</vaadin-grid-filter>
+								</vaadin-grid-sorter>
+							</template>
+                            <template><input on-change="updateFirebaseJobActionData" type="text" class="form-control form-control-table" placeholder="minecraft:stone" value="{{item.item::input}}"></template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column flex-grow="0">
+                            <template class="header">Actions</template>
+                            <template><button type="button" class="btn btn-info btn-flat form-control" on-tap="deleteAction" data-id="[[index]]">Delete!</button></template>
+                          </vaadin-grid-column>
+                        </vaadin-grid>
+                        <div class="input-group col-sm-12">
+                          <select class="form-control" value="{{newActionType::change}}">
+                            <option>Break</option>
+                            <option>Place</option>
+                            <option>Kill</option>
+                            <option>Damage</option>
+                            <option>Use</option>
+                            <option>Tame</option>
+                          </select>
+                          <span class="input-group-btn">
+                          <button type="button" class="btn btn-info btn-flat" on-tap="addNewAction">Add New Action!</button>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (left) -->
+                  <!-- right column -->
+                  <div class="col-md-6">
+                    <div class="box box-info" hidden$="[[job.defaultLevel]]">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Level</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <!-- form start -->
+                      <form class="form-horizontal">
+                        <div class="box-body">
+						  <vaadin-grid items="{{job.level}}" sort="sort">
+						    <vaadin-grid-column>
+							  <template class="header">Level</template>
+							  <template>[[_addOne(index)]]</template>
+						    </vaadin-grid-column>
+						    <vaadin-grid-column>
+							  <template class="header">
+								  <vaadin-grid-sorter path="xp" direction="asc">XP</vaadin-grid-sorter></template>
+							  <template>[[item.xp]]</template>
+						    </vaadin-grid-column>
+						    <vaadin-grid-column>
+							  <template class="header">Actions</template>
+							  <template><button type="button" class="btn btn-info btn-flat col-sm-12"  on-tap="deleteLevelJob" level="[[item]]">Delete</button></template>
+						    </vaadin-grid-column>
+						  </vaadin-grid>
+						  
+                          <div class="input-group col-sm-12">
+						    <input type="number" class="form-control" placeholder="100" value="{{newLevel::input}}">
+						    <span class="input-group-btn">
+							  <button type="button" class="btn btn-info btn-flat" on-tap="addNewLevelJob">Add Level</button>
+						    </span>
+						  </div>
+                        </div>
+                        <!-- /.box-body -->
+                      </form>
+                    </div>
+                    <!-- /.box -->
+                    <div class="box box-success">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Boni</h3>
+                      </div>
+                      <div class="box-body">
+                        <vaadin-grid items="{{job.boni}}">
+                          <vaadin-grid-column>
+                            <template class="header">Type</template>
+                            <template>[[item.type]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Min Level</template>
+                            <template>[[item.minLevel]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Max Level</template>
+                            <template>[[item.maxLevel]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Probabiltiy</template>
+                            <template>[[item.probability]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Only Selected</template>
+                            <template>[[item.onlySelected]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Edit</template>
+                            <template><button type="button" class="btn btn-info btn-flat col-sm-12"  on-tap="switchPage" redirect="jobbonus" redirect-type="jobbonus" redirect-target="[[index]]">Edit</button></template>
+                          </vaadin-grid-column>
+                        </vaadin-grid>
+                        <div class="input-group col-sm-12">
+                          <select class="form-control" value="{{newBonusType::change}}">
+                            <option>Economy</option>
+                            <option>Ep</option>
+                            <option>Item Drop</option>
+                            <option>Item Repair</option>
+                            <option>Multi Drop</option>
+                          </select>
+                          <span class="input-group-btn">
+                          <button type="button" class="btn btn-info btn-flat" on-tap="addNewBonus">Add New Bonus!</button>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                    <div class="box box-info">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Abilities</h3>
+                      </div>
+                      <div class="box-body">
+                        <vaadin-grid style="height:auto;" items="{{job.abilities}}">
+                          <vaadin-grid-column>
+                            <template class="header">Type</template>
+                            <template>[[item.type]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">CoolDown (s)</template>
+                            <template>[[item.cooldown]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Name</template>
+                            <template>[[item.name]]</template>
+                          </vaadin-grid-column>
+                          <vaadin-grid-column>
+                            <template class="header">Edit</template>
+                            <template><button type="button" class="btn btn-info btn-flat col-sm-12"  on-tap="switchPage" redirect="jobability" redirect-type="jobability" redirect-target="[[index]]">Edit</button></template>
+                          </vaadin-grid-column>
+                        </vaadin-grid>
+                        <div class="input-group col-sm-12" >
+                          <select class="form-control" disabled$="{{notMoreThanOne(job.abilities)}}">
+                            <option>Effect</option>
+                          </select>
+                          <span class="input-group-btn">
+                          <button type="button" class="btn btn-info btn-flat" on-tap="addNewAbility" disabled$="{{notMoreThanOne(job.abilities)}}">Add New Ability!</button>
+                          </span>
+                        </div>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (right) -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+            <div class="content-wrapper" pagename="jobability">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  Job Ability ([[job.name]]#[[jobability.name]])
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a on-tap="switchPage" redirect="general"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li><a on-tap="switchPage" redirect="jobs">Jobs</a></li>
+                  <li><a on-tap="switchPage" redirect="job">[[job.id]]</a></li>
+                  <li>Abilities</li>
+                  <li class="active">[[jobability.name]]</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <!-- left column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Basic Settings</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <label for="inputType" class="col-sm-4 control-label">Type</label>
+                            <div class="col-sm-8">
+                              <select class="form-control" value="{{jobability.type::change}}">
+                                <option>Effect</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputCooldown" class="col-sm-4 control-label">Cooldown (seconds)</label>
+                            <div class="col-sm-8">
+                              <input type="number" class="form-control" placeholder="0" value="{{jobability.cooldown::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputName" class="col-sm-4 control-label">Name</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" placeholder="" value="{{jobability.name::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-xs-12">
+                              <button on-tap="deleteAbility" type="button" class="btn btn-info btn-flat col-xs-12">Delete</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (left) -->
+                  <!-- right column -->
+                  <div class="col-md-6">
+                    <template is="dom-if" if="[[isAbilityType(jobability.type, 'Effect')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Effect</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputEffectType" class="col-sm-4 control-label">Potion Type</label>
+                              <div class="col-sm-8">
+                                <input type="text" class="form-control" placeholder="minecraft:speed" value="{{jobability.potionEffect.potionType::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEffectAmplifier" class="col-sm-4 control-label">Amplifier</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" placeholder="0" value="{{jobability.potionEffect.amplifier::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEffectDuration" class="col-sm-4 control-label">Duration (ticks)</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" placeholder="0" value="{{jobability.potionEffect.duration::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEffectParticles" class="col-sm-4 control-label">Particles</label>
+                              <div class="col-xs-8">
+                                <input type="checkbox" checked="{{jobability.potionEffect.particles::change}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEffectAmbiance" class="col-sm-4 control-label">Ambiance</label>
+                              <div class="col-xs-8">
+                                <input type="checkbox" checked="{{jobability.potionEffect.ambiance::change}}">
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (right) -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+            <div class="content-wrapper" pagename="jobbonus">
+              <!-- Content Header (Page header) -->
+              <section class="content-header">
+                <h1>
+                  Job Bonus ([[job.name]])
+                </h1>
+                <ol class="breadcrumb">
+                  <li><a on-tap="switchPage" redirect="general"><i class="fa fa-dashboard"></i> Home</a></li>
+                  <li><a on-tap="switchPage" redirect="jobs">Jobs</a></li>
+                  <li><a on-tap="switchPage" redirect="job">[[job.id]]</a></li>
+                  <li>Boni</li>
+                  <li class="active">[[selectedBonus]]</li>
+                </ol>
+              </section>
+              <!-- Main content -->
+              <section class="content">
+                <!-- /.box -->
+                <div class="row">
+                  <!-- left column -->
+                  <div class="col-md-6">
+                    <!-- general form elements -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Basic Settings</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <label for="inputType" class="col-sm-4 control-label">Type</label>
+                            <div class="col-sm-8">
+                              <select class="form-control" value="{{jobbonus.type::change}}">
+                                <option>Economy</option>
+                                <option>Ep</option>
+                                <option>Item Drop</option>
+                                <option>Item Repair</option>
+                                <option>Multi Drop</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputMinLevel" class="col-sm-4 control-label">Minimum Level</label>
+                            <div class="col-sm-8">
+                              <input type="number" class="form-control" placeholder="0" value="{{jobbonus.minLevel::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputMaxLevel" class="col-sm-4 control-label">Maximum Level</label>
+                            <div class="col-sm-8">
+                              <input type="number" class="form-control" placeholder="-1" value="{{jobbonus.maxLevel::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputProbability" class="col-sm-4 control-label">Probability</label>
+                            <div class="col-sm-8">
+                              <input type="number" step="0.001" min=0 max=1 class="form-control" placeholder="0.01" value="{{jobbonus.probability::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputOnlySelected" class="col-xs-4 control-label">Only Selected</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" checked="{{jobbonus.onlySelected::change}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <div class="col-xs-12">
+                              <button on-tap="deleteBonus" type="button" class="btn btn-info btn-flat col-xs-12">Delete</button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+					<div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Active Actions</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+						  <div class="form-group">
+                            <div class="col-sm-12">
+                              <paper-listbox multi selected-values="{{jobbonus.actions}}" attr-for-selected="textContent">
+                                <paper-item>Break</paper-item>
+                                <paper-item>Place</paper-item>
+                                <paper-item>Kill</paper-item>
+                                <paper-item>Damage</paper-item>
+                                <paper-item>Use</paper-item>
+                                <paper-item>Tame</paper-item>
+                              </paper-listbox>
+                            </div>
+                          </div>
+					    </form>
+					  </div>
+					  <!-- /.box-body -->
+				    </div>
+					<!-- /.box -->
+                  </div>
+                  <!--/.col (left) -->
+                  <!-- right column -->
+                  <div class="col-md-6">
+                    <template is="dom-if" if="[[isBonusType(jobbonus.type, 'Economy')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Economy</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputEconomyMinAmount" class="col-sm-4 control-label">Minimal Amount</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputEconomyMinAmount" placeholder="0" value="{{jobbonus.amountMin::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEconomyMaxAmount" class="col-sm-4 control-label">Maximal Amount</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputEconomyMaxAmount" placeholder="0" value="{{jobbonus.amountMax::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEconomyCurrency" class="col-sm-4 control-label">Currency</label>
+                              <div class="col-sm-8">
+                                <input type="text" class="form-control" id="inputEconomyCurrency" placeholder="" value="{{jobbonus.currency::input}}">
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                    <template is="dom-if" if="[[isBonusType(jobbonus.type, 'Ep')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Ep</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputEpMinAmount" class="col-sm-4 control-label">Minimal Amount</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputEpMinAmount" placeholder="0" value="{{jobbonus.minEp::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputEpMaxAmount" class="col-sm-4 control-label">Maximal Amount</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputEpMaxAmount" placeholder="0" value="{{jobbonus.maxEp::input}}">
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                    <template is="dom-if" if="[[isBonusType(jobbonus.type, 'Multi Drop')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Multi Drop</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputEpMinAmount" class="col-sm-4 control-label">Extra Drops</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputEpMinAmount" placeholder="0" value="{{jobbonus.extraDrops::input}}">
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                    <template is="dom-if" if="[[isBonusType(jobbonus.type, 'Item Drop')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Item Drop</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputItemDropsAmount" class="col-sm-4 control-label">Amount</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputItemDropsAmount" placeholder="0" value="{{jobbonus.item.amount::input}}">
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputItemDropsItem" class="col-sm-4 control-label">Item</label>
+                              <div class="col-sm-8">
+                                <input type="text" class="form-control" id="inputItemDropsItem" placeholder="minecraft:stick" value="{{jobbonus.item.type::input}}">
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                    <template is="dom-if" if="[[isBonusType(jobbonus.type, 'Item Repair')]]">
+                      <div class="box box-warning">
+                        <div class="box-header with-border">
+                          <h3 class="box-title">Item Repair</h3>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                          <form role="form" class="form-horizontal">
+                            <div class="form-group">
+                              <label for="inputItemRepairMinPercent" class="col-sm-4 control-label">Minimal Percent</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputItemRepairMinPercent" placeholder="0.0" value="{{jobbonus.minPercent::input}}" step="0.001" min=0 max=1>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <label for="inputItemRepairMaxPercent" class="col-sm-4 control-label">Maximal Percent</label>
+                              <div class="col-sm-8">
+                                <input type="number" class="form-control" id="inputItemRepairMaxPercent" placeholder="0.0" value="{{jobbonus.maxPercent::input}}" step="0.001" min=0 max=1>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                        <!-- /.box-body -->
+                      </div>
+                    </template>
+                    <!-- /.box -->
+                    <div class="box box-warning">
+                      <div class="box-header with-border">
+                        <h3 class="box-title">Message</h3>
+                      </div>
+                      <!-- /.box-header -->
+                      <div class="box-body">
+                        <form role="form" class="form-horizontal">
+                          <div class="form-group">
+                            <label for="inputMessage" class="col-sm-4 control-label">Message</label>
+                            <div class="col-sm-8">
+                              <input type="text" class="form-control" id="inputMessage" placeholder="" value="{{jobbonus.message::input}}">
+                            </div>
+                          </div>
+                          <div class="form-group">
+                            <label for="inputSendMessage" class="col-xs-4 control-label">Send Message</label>
+                            <div class="col-xs-8">
+                              <input type="checkbox" id="inputSendMessage" value="{{jobbonus.sendMessage::change}}">
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                      <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                  </div>
+                  <!--/.col (right) -->
+                </div>
+                <!-- /.row -->
+              </section>
+              <!-- /.content -->
+            </div>
+          </iron-pages>	
+
+          <!-- /.content-wrapper -->
+          <footer class="main-footer">
+            <div class="pull-right">
+              <a href="https://lergin.de/imprint">Imprint</a>
+              <a href="https://lergin.de/privacy">Privacy</a>
+            </div>
+            <div class="hidden-xs">Design (<a href="https://almsaeedstudio.com/themes/AdminLTE/">AdminLTE </a>) by <a href="http://almsaeedstudio.com">Almsaeed Studio</a></div>
+          </footer>
+        </div>
+	    <div class="lockscreen-wrapper" hidden$="[[signedIn]]">
+		  <div class="lockscreen-logo">
+			<b>Laborus</b> Config Editor
+		  </div>
+
+		  <div class="lockscreen-item">
+			<login-fire id="login" auto-sign-up providers="anonymous,google,github,twitter,facebook" user="{{user}}" signed-in="{{signedIn}}" on-signedin="login"></login-fire>
+		  </div>
+		  <div class="text-center">
+		    You need to login to use the site so the data can be saved.
+		  </div>
+		  <div class="lockscreen-footer text-center">Design (<a href="https://almsaeedstudio.com/themes/AdminLTE/">AdminLTE </a>) by <a href="http://almsaeedstudio.com">Almsaeed Studio</a></div>
+		  <div class="lockscreen-footer text-center">
+		    <a href="https://lergin.de/imprint">Imprint</a>
+		    <a href="https://lergin.de/privacy">Privacy</a>
+		  </div>
+		</div>
+      </template>
+    </dom-bind>
+    <!-- jQuery 2.2.3 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+    <!-- Bootstrap 3.3.6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="/dist/js/app.min.js"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="/dist/js/data.js"></script>
+    <script>
+    var autobind = document.querySelector('dom-bind');
+		
+	autobind.login = function(a,b) {
+		ga('set', 'dimension1', b.user.isAnonymous ? 'anonymous': b.user.providerData[0].providerId);
+		firebase.database().ref(`user/${b.user.uid}`).once("value",(a)=>{
+			if(!a.val()){
+				firebase.database().ref(`user/${b.user.uid}`).set(data);
+				ga('send', 'event', 'Login', 'register');
+			}else{
+				ga('send', 'event', 'Login', 'login');
+			}
+		});
+	}
+	
+	autobind.reset = function() {
+		firebase.database().ref(`user/${autobind.user.uid}`).set(data);
+		ga('send', 'event', 'Config', 'reset');
+	}
+	
+	autobind.newJob = function() {
+		if (!autobind.config.jobs) {
+            autobind.set("config.jobs", [{
+                id: autobind.newJobId,
+                name: autobind.newJobId
+            }]);
+        } else {
+            autobind.push("config.jobs", {
+                id: autobind.newJobId,
+				name: autobind.newJobId
+            });
+        }
+		ga('send', 'event', 'Config', 'newJob', autobind.newJobId);
+		switchPage("job", "job", autobind.config.jobs ? autobind.config.jobs.length - 1 : 0);
+	}
+
+    autobind.deleteJob = function(e) {
+        autobind.splice("config.jobs", autobind.selectedJob, 1);
+		ga('send', 'event', 'Config', 'deleteJob');
+        autobind.page = "jobs"
+    }
+
+	autobind.deleteLevelJob = function(e) {
+		let level = e.target.level.xp;
+		
+		for(let i = 0; i < autobind.job.level.length; i++){
+			if(level == autobind.job.level[i].xp){
+				autobind.splice("job.level", i, 1);
+				return;
+			}
+		}
+    }
+
+	autobind.deleteLevelConfig = function(e) {
+		let level = e.target.level.xp;
+		
+		for(let i = 0; i < autobind.config.level.length; i++){
+			if(level == autobind.config.level[i].xp){
+				autobind.splice("config.level", i, 1);
+				return;
+			}
+		}
+    }
+	
+	autobind.sort = function(a,b){
+		return a - b;
+	}
+	
+	autobind.logout = function() {
+		ga('send', 'event', 'Login', 'logout');
+		document.getElementById("login").signOut()
+	}
+
+    autobind.isActive = function(currpage, page, item, currjob) {
+        if (currpage == page && page == 'job') {
+            return item == currjob ? "active" : "";
+        }
+        return currpage == page ? "active" : "";
+    }
+	
+	function convertAction(action) {
+		delete action.type
+		
+		return action;
+	}
+	
+	function convertBonus(bonus) {
+		delete bonus.type
+		
+		if(bonus.message){
+			bonus.message = {
+				text : bonus.message
+			}
+		}
+		
+		bonus.actions = bonus.actions.filter((action) => action != 'nothing');
+		
+		return bonus;
+	}
+	
+	function convertAbility(ability) {
+		delete ability.type
+				
+		return ability;
+	}
+	
+    autobind.export = function(data, page) {
+		if(page == "import"){
+			let exportdata = JSON.parse(JSON.stringify(data));
+			
+			if(data.jobs){
+				
+			
+			exportdata.jobs = data.jobs.map((job) => {
+				let exportJob = JSON.parse(JSON.stringify(job));
+				
+				delete exportJob.actions;
+				delete exportJob.abilities;
+				delete exportJob.boni;
+				delete exportJob.useDefaultLevel;
+
+				if(job.actions){
+					exportJob.actions = {
+						break: {
+							items : job.actions.filter((action) => {
+								return action.type == "Break";
+							}).map(convertAction)
+						},
+						place: {
+							items : job.actions.filter((action) => {
+								return action.type == "Place";
+							}).map(convertAction)
+						},
+						damage: {
+							items : job.actions.filter((action) => {
+								return action.type == "Damage";
+							}).map(convertAction)
+						},
+						use: {
+							items : job.actions.filter((action) => {
+								return action.type == "Use";
+							}).map(convertAction)
+						},
+						tame: {
+							items : job.actions.filter((action) => {
+								return action.type == "Tame";
+							}).map(convertAction)
+						},
+						kill: {
+							items : job.actions.filter((action) => {
+								return action.type == "Kill";
+							}).map(convertAction)
+						}
+					}
+				}
+
+				if(job.boni){
+					exportJob.bonus = {
+						economy: job.boni.filter((bonus) => {
+							return bonus.type == "Economy";
+						}).map(convertBonus),
+						ep: job.boni.filter((bonus) => {
+							return bonus.type == "Ep";
+						}).map(convertBonus),
+						itemDrop: job.boni.filter((bonus) => {
+							return bonus.type == "Item Drop";
+						}).map(convertBonus),
+						itemRepair: job.boni.filter((bonus) => {
+							return bonus.type == "Item Repair";
+						}).map(convertBonus),
+						multiDrop: job.boni.filter((bonus) => {
+							return bonus.type == "Multi Drop";
+						}).map(convertBonus)
+					}
+				}
+
+				if(job.abilities){
+					exportJob.ability = job.abilities.map(convertAbility)[0];
+				}
+				
+				if(job.defaultLevel){
+					if(data.level){
+						exportJob.level = data.level.map(a=>a.xp).sort(autobind.sort);
+					}
+				}else{
+					if(job.level){
+						exportJob.level = job.level.map(a=>a.xp).sort(autobind.sort);
+					}
+				}
+				
+				
+				
+				return exportJob;
+			})
+			}
+			
+			if(data.level){
+				exportdata.level = data.level.map(a=>a.xp).sort(autobind.sort);
+			}
+			
+			if(data.enabledGamemodes){
+				console.log(data.enabledGamemodes);
+				exportdata.enabledGamemodes = data.enabledGamemodes.filter((mode) => mode != 'nothing').map((mode) => mode.toLowerCase())
+			}
+			
+			return JSON.stringify(exportdata);
+		}else{
+			return ""
+		}
+    }
+	
+	autobind.notMoreThanOne = function(a) {
+		return a != undefined && a.length > 0;
+	}
+
+	
+	autobind._addOne = function(a) {
+		return a+1;
+	}
+
+    autobind.isAbilityType = function(type, type2) {
+        if (type == 'Effect' && autobind.jobability.potionEffect == undefined) {
+            autobind.jobability.potionEffect = {};
+        }
+        return type == type2;
+    }
+
+    autobind.isBonusType = function(type, type2) {
+        if (type == 'Effect' && autobind.jobability.potionEffect == undefined) {
+            autobind.jobability.potionEffect = {};
+        }
+        return type == type2;
+    }
+
+    autobind.addNewLevelJob = function() {
+		if (!autobind.job.level) {
+            autobind.set("job.level", [{xp:parseInt(autobind.newLevel)}])
+        } else {
+            autobind.push("job.level", {xp:parseInt(autobind.newLevel)})
+        }
+    }
+
+    autobind.addNewLevelConfig = function() {
+		if (!autobind.config.level) {
+            autobind.set("config.level", [{xp:parseInt(autobind.newLevel)}])
+        } else {
+            autobind.push("config.level", {xp:parseInt(autobind.newLevel)})
+        }
+    }
+
+    autobind.page = "general";
+    autobind.selectedJob = 0;
+    autobind.selectedBonus = 0;
+    autobind.selectedAbility = 0;
+    autobind.newBonusType = "Multi Drop";
+    autobind.newActionType = "Break";
+    autobind.newAbilityType = "Effect";
+
+    autobind.addNewAction = function() {
+        if (!autobind.job.actions) {
+            autobind.set("job.actions", [{
+                type: autobind.newActionType,
+                xp: 1,
+                needLevel: 0,
+                item: "minecraft:stone"
+            }])
+        } else {
+            autobind.push("job.actions", {
+                type: autobind.newActionType,
+                xp: 1,
+                needLevel: 0,
+                item: "minecraft:stone"
+            })
+        }
+		ga('send', 'event', 'Config', 'newAction', autobind.newActionType);
+    }
+
+    autobind.deleteAction = function(e) {
+        autobind.splice("job.actions", e.target.dataId, 1);
+   		ga('send', 'event', 'Config', 'deleteAction');
+	}
+
+    autobind.addNewBonus = function() {
+        if (!autobind.job.boni) {
+            autobind.set("job.boni", [{
+                type: autobind.newBonusType,
+                minLevel: 0,
+                maxLevel: -1,
+                probability: 0.01,
+                onlySelected: true,
+				actions: ['nothing']
+            }])
+        } else {
+            autobind.push("job.boni", {
+                type: autobind.newBonusType,
+                minLevel: 0,
+                maxLevel: -1,
+                probability: 0.01,
+                onlySelected: true,
+				actions: ['nothing']
+            })
+        }
+   		ga('send', 'event', 'Config', 'newBonus', autobind.newBonusType);
+	}
+
+    autobind.deleteBonus = function(e) {
+        autobind.splice("job.boni", autobind.selectedBonus, 1);
+        autobind.page = "job"
+		ga('send', 'event', 'Config', 'deleteBonus');
+	}
+
+    autobind.addNewAbility = function() {
+        if (!autobind.job.abilities) {
+            autobind.set("job.abilities", [{
+                type: autobind.newAbilityType,
+                cooldown: 10,
+                name: "NAME"
+            }])
+        } else {
+            autobind.push("job.abilities", {
+                type: autobind.newAbilityType,
+                cooldown: 10,
+                name: "NAME"
+            })
+        }
+		ga('send', 'event', 'Config', 'newAbility', autobind.newAbilityType);
+	}
+
+    autobind.deleteAbility = function(e) {
+        autobind.splice("job.abilities", autobind.selectedAbility, 1);
+        autobind.page = "job"
+		ga('send', 'event', 'Config', 'deleteAbility');
+	}
+
+    autobind.switchPage = function(e) {
+        for (a of e.composedPath()) {
+            if (a.attributes.getNamedItem("redirect")) {
+                autobind.page = a.attributes.getNamedItem("redirect").value;
+                if (a.attributes.getNamedItem("redirect-type")) {
+					switchPage(a.attributes.getNamedItem("redirect").value,
+							  a.attributes.getNamedItem("redirect-type").value,
+							  a.redirectTarget);
+                }else{
+					switchPage(a.attributes.getNamedItem("redirect").value,
+							  null, null);
+				}
+                return;
+            }
+        }
+    }
+	
+	function switchPage(redirect, type, target) {
+		autobind.page = redirect;
+		ga('set', 'dimension1', autobind.user.isAnonymous ? 'anonymous': autobind.user.providerData[0].providerId);
+		ga('set', 'page', `${redirect}`);			
+		ga('send', 'pageview');
+		switch (type) {
+			case "job":
+				autobind.selectedJob = target;
+				break;
+			case "jobability":
+				autobind.selectedAbility = target;
+				break;
+			case "jobbonus":
+				autobind.selectedBonus = target;
+				break;
+		}
+		let grids = document.getElementsByTagName('vaadin-grid');
+		for(let grid of grids){if(grid && grid.clearCache){grid.clearCache()}}
+	}
+
+    autobind.updateFirebaseJobActionData = function(e) {
+        setTimeout(() => {
+            document.getElementById("jobDocument").setStoredValue(`user/${autobind.user.uid}/jobs/${autobind.selectedJob}/actions`, autobind.job.actions);
+        }, 100)
+    }
+    </script>
+	<script>
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-60277501-7', 'auto');
+	ga('set', 'anonymizeIp', true);
+	ga('send', 'pageview');
+	</script>
+	<script async src='https://www.google-analytics.com/analytics.js'></script>
+  </body>
+</html>

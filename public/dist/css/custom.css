@@ -1,0 +1,23 @@
+.navbar {
+	max-height: 50px;
+}
+
+.form-control-table{
+	margin-bottom: 0px;
+}
+
+.input-group {
+	margin-top: 20px;
+}
+
+.main-footer-login {
+	margin: 0px;
+}
+
+.lockscreen-item {
+	width: auto;
+}
+
+.lockscreen-wrapper {
+	max-width: 800px;
+}

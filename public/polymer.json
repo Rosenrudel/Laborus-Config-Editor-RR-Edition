@@ -1,0 +1,19 @@
+{
+	"sources": [
+		"index.html"
+	],
+	"extraDependencies": [
+		"*.png",
+		"*.json",
+		"*.ico",
+		"*.xml",
+		"bower_components/login-fire/locales.json"
+	],
+	"builds": [{
+    	"bundle": true,
+    	"js": {"minify": true},
+    	"css": {"minify": true},
+    	"html": {"minify": true}
+	}],
+    "shell": "index.html"
+}
