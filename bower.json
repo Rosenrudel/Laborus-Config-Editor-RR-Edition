@@ -1,15 +1,15 @@
 {
-  "name": "LaborusConfigEditor",
-  "homepage": "lergin.de",
+  "name": "LaborusConfigEditorRREdition",
+  "homepage": "rosenrudel.de",
   "authors": [
-    "Lergin"
+    "Lergin","Pax (Rosenrudel)"
   ],
-  "description": "a editor for the configurations of laborus",
+  "description": "An editor for the configuration of lergins sponge job-plugin 'laborus'.",
   "main": "index.html",
   "keywords": [
     "polymer"
   ],
-  "license": "none",
+  "license": "MIT",
   "ignore": [
     "/.*",
     "node_modules",
